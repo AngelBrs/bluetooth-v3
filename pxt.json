@@ -1,25 +1,23 @@
 {
-    "name": "Bluetooth-V2",
-    "description": "",
+    "name": "pxt-bluetoothV3",
+    "version": "0.0.1",
+    "description": "Full Bluetooth V2 custom blocks for micro:bit",
+    "license": "MIT",
     "dependencies": {
         "core": "*",
-        "radio": "*",
+        "bluetooth": "*",
         "microphone": "*"
     },
     "files": [
-        "main.blocks",
         "main.ts",
         "README.md"
     ],
-    "testFiles": [
-        "test.ts"
-    ],
+    "public": true,
     "targetVersions": {
         "target": "8.0.18",
         "targetId": "microbit"
     },
     "supportedTargets": [
         "microbit"
-    ],
-    "preferredEditor": "tsprj"
+    ]
 }
