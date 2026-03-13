@@ -1,30 +1,16 @@
-/**
- * BluetoothV2 - Full Bluetooth custom blocks for micro:bit
- * Provides easy-to-use blocks for initializing, naming,
- * advertising, sending/receiving data over BLE.
- *
- * NOTE: Bluetooth and Radio cannot be used at the same time.
- */
-
 //% color="#0082FB" weight=95 icon="\uf294" block="Bluetooth V2"
-//% groups='["Setup","Advertising","Data","Events","Status"]'
 namespace bluetoothV2 {
 
-    let _deviceName = "micro:bit";
-    let _isInitialized = false;
-    let _isConnected = false;
-    let _txBuffer = "";
-    let _rxBuffer = "";
-    let _onConnectedHandler: () => void = null;
-    let _onDisconnectedHandler: () => void = null;
-    let _onDataHandler: (data: string) => void = null;
+    let _deviceName = "micro:bit"
+    let _isConnected = false
+    let _isInitialized = false
+    let _rxBuffer = ""
 
-    // ─── SETUP ──────────────────────────────────────────────────────────────
+    // ── SETUP ────────────────────────────────────────────────────────────────
 
     /**
-     * Initialize Bluetooth V2 with a custom device name.
-     * Must be called once at program start (e.g. in "on start").
-     * @param name The BLE advertised name (max 8 chars), eg: "myBit"
+     * Initialize Bluetooth V2. Call this once in "on start".
+     * @param name Device name shown when pairing, eg: "myBit"
      */
     //% blockId=bluetoothV2_init
     //% block="init Bluetooth V2 with name %name"
@@ -32,40 +18,28 @@ namespace bluetoothV2 {
     //% weight=100
     //% group="Setup"
     export function initBluetoothV2(name: string): void {
-        _deviceName = name.substr(0, 8);
-        bluetooth.setTransmitPower(7);
-        bluetooth.startUartService();
-        _isInitialized = true;
-
-        // Wire internal event handlers
+        _deviceName = name.substr(0, 8)
+        bluetooth.startUartService()
+        _isInitialized = true
         bluetooth.onBluetoothConnected(function () {
-            _isConnected = true;
-            if (_onConnectedHandler) _onConnectedHandler();
-        });
-
+            _isConnected = true
+        })
         bluetooth.onBluetoothDisconnected(function () {
-            _isConnected = false;
-            if (_onDisconnectedHandler) _onDisconnectedHandler();
-        });
-
-        bluetooth.uartDataReceived(serial.delimiters(Delimiters.NewLine), function () {
-            _rxBuffer = bluetooth.uartReadUntil(serial.delimiters(Delimiters.NewLine));
-            if (_onDataHandler) _onDataHandler(_rxBuffer);
-        });
+            _isConnected = false
+        })
     }
 
     /**
-     * Change the Bluetooth device name at any time.
-     * Takes effect on the next advertisement / reconnect.
-     * @param name New BLE device name (max 8 chars), eg: "newName"
+     * Change the Bluetooth device name (max 8 characters).
+     * @param name New device name, eg: "newBit"
      */
     //% blockId=bluetoothV2_setName
     //% block="set Bluetooth name to %name"
-    //% name.defl="newName"
+    //% name.defl="newBit"
     //% weight=90
     //% group="Setup"
     export function setDeviceName(name: string): void {
-        _deviceName = name.substr(0, 8);
+        _deviceName = name.substr(0, 8)
     }
 
     /**
@@ -76,66 +50,30 @@ namespace bluetoothV2 {
     //% weight=85
     //% group="Setup"
     export function getDeviceName(): string {
-        return _deviceName;
+        return _deviceName
     }
 
     /**
-     * Set the Bluetooth transmit power level (0–7).
-     * Higher = longer range, more battery use.
-     * @param level Power level 0–7, eg: 7
+     * Set the Bluetooth transmit power (0 = lowest, 7 = highest range).
+     * @param level Power level, eg: 7
      */
     //% blockId=bluetoothV2_setPower
-    //% block="set Bluetooth TX power to %level"
-    //% level.min=0 level.max=7
+    //% block="set Bluetooth TX power %level"
+    //% level.min=0
+    //% level.max=7
     //% level.defl=7
     //% weight=80
     //% group="Setup"
     export function setTxPower(level: number): void {
-        bluetooth.setTransmitPower(Math.clamp(0, 7, level));
+        let safe = level < 0 ? 0 : level > 7 ? 7 : level
+        bluetooth.setTransmitPower(safe)
     }
 
-    // ─── ADVERTISING ────────────────────────────────────────────────────────
+    // ── DATA ─────────────────────────────────────────────────────────────────
 
     /**
-     * Start Bluetooth advertising (make device discoverable).
-     */
-    //% blockId=bluetoothV2_startAdvert
-    //% block="start Bluetooth advertising"
-    //% weight=70
-    //% group="Advertising"
-    export function startAdvertising(): void {
-        bluetooth.advertiseUid(1234, 7, true);
-    }
-
-    /**
-     * Stop Bluetooth advertising.
-     */
-    //% blockId=bluetoothV2_stopAdvert
-    //% block="stop Bluetooth advertising"
-    //% weight=65
-    //% group="Advertising"
-    export function stopAdvertising(): void {
-        bluetooth.advertiseUid(1234, 7, false);
-    }
-
-    /**
-     * Advertise a custom URL via Eddystone beacon.
-     * @param url The URL to advertise, eg: "makecode.microbit.org"
-     */
-    //% blockId=bluetoothV2_advertiseUrl
-    //% block="advertise URL %url"
-    //% url.defl="makecode.microbit.org"
-    //% weight=60
-    //% group="Advertising"
-    export function advertiseUrl(url: string): void {
-        bluetooth.advertiseUrl(url, 7, true);
-    }
-
-    // ─── DATA ───────────────────────────────────────────────────────────────
-
-    /**
-     * Send a text string over Bluetooth UART.
-     * @param text The text to send, eg: "Hello!"
+     * Send a text string over Bluetooth.
+     * @param text Text to send, eg: "Hello!"
      */
     //% blockId=bluetoothV2_sendString
     //% block="send string %text over Bluetooth"
@@ -143,12 +81,12 @@ namespace bluetoothV2 {
     //% weight=75
     //% group="Data"
     export function sendString(text: string): void {
-        bluetooth.uartWriteString(text + "\n");
+        bluetooth.uartWriteString(text + "\n")
     }
 
     /**
-     * Send a number over Bluetooth UART.
-     * @param value The number to send, eg: 42
+     * Send a number over Bluetooth.
+     * @param value Number to send, eg: 42
      */
     //% blockId=bluetoothV2_sendNumber
     //% block="send number %value over Bluetooth"
@@ -156,46 +94,61 @@ namespace bluetoothV2 {
     //% weight=73
     //% group="Data"
     export function sendNumber(value: number): void {
-        bluetooth.uartWriteNumber(value);
-        bluetooth.uartWriteString("\n");
+        bluetooth.uartWriteString("" + value + "\n")
     }
 
     /**
-     * Send a key=value pair over Bluetooth UART.
-     * @param key   The key name, eg: "temp"
-     * @param value The value, eg: 24
+     * Send a key=value pair over Bluetooth.
+     * @param key Key name, eg: "temp"
+     * @param value Value, eg: 24
      */
     //% blockId=bluetoothV2_sendKeyValue
-    //% block="send key %key = %value over Bluetooth"
-    //% key.defl="key" value.defl=0
+    //% block="send %key = %value over Bluetooth"
+    //% key.defl="key"
+    //% value.defl=0
     //% weight=71
     //% group="Data"
     export function sendKeyValue(key: string, value: number): void {
-        bluetooth.uartWriteString(key + "=" + value + "\n");
+        bluetooth.uartWriteString(key + "=" + value + "\n")
     }
 
     /**
-     * Get the last string received over Bluetooth UART.
+     * Read a line of text received over Bluetooth.
+     */
+    //% blockId=bluetoothV2_readString
+    //% block="read Bluetooth string"
+    //% weight=69
+    //% group="Data"
+    export function readString(): string {
+        _rxBuffer = bluetooth.uartReadUntil(serial.delimiters(Delimiters.NewLine))
+        return _rxBuffer
+    }
+
+    /**
+     * Get the last string received over Bluetooth.
      */
     //% blockId=bluetoothV2_lastReceived
     //% block="last received Bluetooth string"
-    //% weight=68
+    //% weight=67
     //% group="Data"
     export function lastReceivedString(): string {
-        return _rxBuffer;
+        return _rxBuffer
     }
 
-    // ─── EVENTS ─────────────────────────────────────────────────────────────
+    // ── EVENTS ───────────────────────────────────────────────────────────────
 
     /**
      * Run code when a Bluetooth device connects.
      */
     //% blockId=bluetoothV2_onConnected
     //% block="on Bluetooth connected"
-    //% weight=55
+    //% weight=60
     //% group="Events"
     export function onConnected(handler: () => void): void {
-        _onConnectedHandler = handler;
+        bluetooth.onBluetoothConnected(function () {
+            _isConnected = true
+            handler()
+        })
     }
 
     /**
@@ -203,62 +156,65 @@ namespace bluetoothV2 {
      */
     //% blockId=bluetoothV2_onDisconnected
     //% block="on Bluetooth disconnected"
-    //% weight=53
+    //% weight=58
     //% group="Events"
     export function onDisconnected(handler: () => void): void {
-        _onDisconnectedHandler = handler;
+        bluetooth.onBluetoothDisconnected(function () {
+            _isConnected = false
+            handler()
+        })
     }
 
     /**
-     * Run code when data is received over Bluetooth.
-     * The received string is passed as "data".
+     * Run code when data is received over Bluetooth UART.
      */
     //% blockId=bluetoothV2_onDataReceived
-    //% block="on Bluetooth data received as $data"
-    //% draggableParameters
-    //% weight=50
+    //% block="on Bluetooth data received"
+    //% weight=55
     //% group="Events"
-    export function onDataReceived(handler: (data: string) => void): void {
-        _onDataHandler = handler;
+    export function onDataReceived(handler: () => void): void {
+        bluetooth.onUartDataReceived(serial.delimiters(Delimiters.NewLine), function () {
+            _rxBuffer = bluetooth.uartReadUntil(serial.delimiters(Delimiters.NewLine))
+            handler()
+        })
     }
 
-    // ─── STATUS ─────────────────────────────────────────────────────────────
+    // ── STATUS ───────────────────────────────────────────────────────────────
 
     /**
-     * Returns true if a device is currently connected over Bluetooth.
+     * True if a device is currently connected over Bluetooth.
      */
     //% blockId=bluetoothV2_isConnected
     //% block="Bluetooth is connected"
-    //% weight=40
+    //% weight=45
     //% group="Status"
     export function isConnected(): boolean {
-        return _isConnected;
+        return _isConnected
     }
 
     /**
-     * Returns true if Bluetooth V2 has been initialized.
+     * True if Bluetooth V2 has been initialized.
      */
     //% blockId=bluetoothV2_isInitialized
     //% block="Bluetooth V2 is initialized"
-    //% weight=38
+    //% weight=43
     //% group="Status"
     export function isInitialized(): boolean {
-        return _isInitialized;
+        return _isInitialized
     }
 
     /**
-     * Show Bluetooth connection status on the LED display.
-     * Displays a tick if connected, a cross if not.
+     * Show Bluetooth status on the LED display.
      */
     //% blockId=bluetoothV2_showStatus
     //% block="show Bluetooth status on display"
-    //% weight=35
+    //% weight=40
     //% group="Status"
     export function showStatus(): void {
         if (_isConnected) {
-            basic.showIcon(IconNames.Yes);
+            basic.showIcon(IconNames.Yes)
         } else {
-            basic.showIcon(IconNames.No);
+            basic.showIcon(IconNames.No)
         }
     }
 }
